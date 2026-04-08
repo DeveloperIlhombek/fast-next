@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { getFullName, haptic } from '@/lib/telegram'
 import { AttendanceStatus, Student } from '@/lib/types'
 
@@ -15,7 +16,7 @@ const STATUS_CONFIG: Record<
 	late: { label: 'Kech', emoji: '⌚', className: 'active-late' },
 }
 
-export function StatusBadge({ status }: { status: AttendanceStatus }) {
+export const StatusBadge = memo(function StatusBadge({ status }: { status: AttendanceStatus }) {
 	const config = STATUS_CONFIG[status]
 	const colorMap = {
 		present: 'var(--status-present)',
@@ -35,7 +36,7 @@ export function StatusBadge({ status }: { status: AttendanceStatus }) {
 			{config.emoji} {config.label}
 		</span>
 	)
-}
+})
 
 // ============================================
 // Attendance Toggle Button Group
@@ -47,7 +48,7 @@ interface AttendanceToggleProps {
 	disabled?: boolean
 }
 
-export function AttendanceToggle({
+export const AttendanceToggle = memo(function AttendanceToggle({
 	studentId,
 	currentStatus,
 	onStatusChange,
@@ -86,7 +87,7 @@ export function AttendanceToggle({
 			})}
 		</div>
 	)
-}
+})
 
 // ============================================
 // Student Attendance Card
@@ -99,7 +100,7 @@ interface StudentAttendanceCardProps {
 	disabled?: boolean
 }
 
-export function StudentAttendanceCard({
+export const StudentAttendanceCard = memo(function StudentAttendanceCard({
 	student,
 	status,
 	onStatusChange,
@@ -190,7 +191,7 @@ export function StudentAttendanceCard({
 			/>
 		</div>
 	)
-}
+})
 
 // ============================================
 // Attendance Summary Bar
@@ -202,7 +203,7 @@ interface AttendanceSummaryProps {
 	total: number
 }
 
-export function AttendanceSummary({
+export const AttendanceSummary = memo(function AttendanceSummary({
 	present,
 	absent,
 	late,
@@ -296,12 +297,12 @@ export function AttendanceSummary({
 			</div>
 		</div>
 	)
-}
+})
 
 // ============================================
 // Stats Card
 // ============================================
-export function StatsCard({
+export const StatsCard = memo(function StatsCard({
 	value,
 	label,
 	color,
@@ -321,4 +322,4 @@ export function StatsCard({
 			<p className='stat-label'>{label}</p>
 		</div>
 	)
-}
+})

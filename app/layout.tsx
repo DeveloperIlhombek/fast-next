@@ -22,8 +22,8 @@ export default function RootLayout({
   return (
     <html lang="uz">
       <head>
-        {/* Telegram WebApp SDK */}
-        <script src="https://telegram.org/js/telegram-web-app.js" />
+        {/* Telegram WebApp SDK — must load before app code */}
+        <script src="https://telegram.org/js/telegram-web-app.js" async />
       </head>
       <body>
         <div

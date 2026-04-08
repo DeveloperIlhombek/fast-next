@@ -11,6 +11,47 @@ import {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // ============================================
+// In-memory GET cache with TTL
+// ============================================
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+const cache = new Map<string, CacheEntry<unknown>>();
+
+// Default TTL values (ms)
+const TTL = {
+  short: 30_000,   // 30s — attendance check
+  medium: 60_000,  // 1min — groups, students
+  long: 300_000,   // 5min — stats
+};
+
+function getCached<T>(key: string): T | null {
+  const entry = cache.get(key) as CacheEntry<T> | undefined;
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCached<T>(key: string, data: T, ttl: number) {
+  cache.set(key, { data, expiresAt: Date.now() + ttl });
+}
+
+export function invalidateCache(prefix?: string) {
+  if (!prefix) {
+    cache.clear();
+    return;
+  }
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) cache.delete(key);
+  }
+}
+
+// ============================================
 // API Client
 // ============================================
 class ApiClient {
@@ -32,6 +73,7 @@ class ApiClient {
     this.token = null;
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
+    invalidateCache();
   }
 
   private async request<T>(
@@ -66,7 +108,15 @@ class ApiClient {
     return response.json();
   }
 
-  get<T>(path: string) {
+  get<T>(path: string, ttl?: number): Promise<T> {
+    if (ttl !== undefined) {
+      const cached = getCached<T>(path);
+      if (cached !== null) return Promise.resolve(cached);
+      return this.request<T>(path, { method: "GET" }).then((data) => {
+        setCached(path, data, ttl);
+        return data;
+      });
+    }
     return this.request<T>(path, { method: "GET" });
   }
 
@@ -89,6 +139,8 @@ class ApiClient {
   }
 }
 
+export { TTL };
+
 export const api = new ApiClient();
 
 // ============================================
@@ -103,30 +155,35 @@ export const authApi = {
 // Teacher API
 // ============================================
 export const teacherApi = {
-  getMyGroups: () => api.get<Group[]>("/teacher/groups"),
+  getMyGroups: () => api.get<Group[]>("/teacher/groups", TTL.medium),
 
   getGroupStudents: (groupId: number) =>
-    api.get<Student[]>(`/teacher/groups/${groupId}/students`),
+    api.get<Student[]>(`/teacher/groups/${groupId}/students`, TTL.medium),
 
   submitAttendance: (
     groupId: number,
     date: string,
     records: { student_id: number; status: string; note?: string }[]
-  ) =>
-    api.post<void>(`/teacher/attendance`, {
+  ) => {
+    // Invalidate today's attendance cache after submit
+    invalidateCache(`/teacher/attendance/check?group_id=${groupId}`);
+    return api.post<void>(`/teacher/attendance`, {
       group_id: groupId,
       date,
       records,
-    }),
+    });
+  },
 
   getAttendanceHistory: (groupId?: number, page = 1, size = 20) =>
     api.get<PaginatedResponse<AttendanceRecord>>(
-      `/teacher/attendance/history?${groupId ? `group_id=${groupId}&` : ""}page=${page}&size=${size}`
+      `/teacher/attendance/history?${groupId ? `group_id=${groupId}&` : ""}page=${page}&size=${size}`,
+      TTL.short
     ),
 
   checkTodayAttendance: (groupId: number, date: string) =>
     api.get<AttendanceRecord[] | null>(
-      `/teacher/attendance/check?group_id=${groupId}&date=${date}`
+      `/teacher/attendance/check?group_id=${groupId}&date=${date}`,
+      TTL.short
     ),
 };
 
@@ -136,12 +193,13 @@ export const teacherApi = {
 export const studentApi = {
   getMyAttendance: (page = 1, size = 30) =>
     api.get<PaginatedResponse<AttendanceRecord>>(
-      `/student/attendance?page=${page}&size=${size}`
+      `/student/attendance?page=${page}&size=${size}`,
+      TTL.short
     ),
 
-  getMyStats: () => api.get<AttendanceStats>("/student/attendance/stats"),
+  getMyStats: () => api.get<AttendanceStats>("/student/attendance/stats", TTL.medium),
 
-  getMyGroup: () => api.get<Group>("/student/group"),
+  getMyGroup: () => api.get<Group>("/student/group", TTL.long),
 };
 
 // ============================================
@@ -197,5 +255,5 @@ export const adminApi = {
       total_students: number;
       total_groups: number;
       today_attendance_rate: number;
-    }>("/admin/stats"),
+    }>("/admin/stats", TTL.medium),
 };

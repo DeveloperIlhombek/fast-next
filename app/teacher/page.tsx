@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import { Group } from "@/lib/types";
 import { teacherApi } from "@/lib/api";
@@ -31,10 +31,10 @@ export default function TeacherPage() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const handleGroupPress = (group: Group) => {
+  const handleGroupPress = useCallback((group: Group) => {
     haptic.medium();
     router.push(`/teacher/attendance/${group.id}`);
-  };
+  }, [router]);
 
   if (isLoading) return <LoadingScreen message="Guruhlar yuklanmoqda..." />;
 
@@ -101,7 +101,7 @@ export default function TeacherPage() {
   );
 }
 
-function GroupItem({
+const GroupItem = memo(function GroupItem({
   group,
   isLast,
   onClick,
@@ -183,4 +183,4 @@ function GroupItem({
       <span style={{ color: "var(--tg-hint)", fontSize: "18px" }}>›</span>
     </button>
   );
-}
+})
