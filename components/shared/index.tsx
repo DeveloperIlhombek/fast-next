@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { haptic } from "@/lib/telegram";
 
@@ -17,7 +18,7 @@ interface BottomNavProps {
   items: NavItem[];
 }
 
-export function BottomNav({ items }: BottomNavProps) {
+export const BottomNav = memo(function BottomNav({ items }: BottomNavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -48,7 +49,7 @@ export function BottomNav({ items }: BottomNavProps) {
       })}
     </nav>
   );
-}
+})
 
 // ============================================
 // Page Header
@@ -60,7 +61,7 @@ interface PageHeaderProps {
   style?: React.CSSProperties;
 }
 
-export function PageHeader({
+export const PageHeader = memo(function PageHeader({
   title,
   subtitle,
   rightAction,
@@ -112,12 +113,12 @@ export function PageHeader({
       </div>
     </header>
   );
-}
+})
 
 // ============================================
 // Loading Screen
 // ============================================
-export function LoadingScreen({ message = "Yuklanmoqda..." }: { message?: string }) {
+export const LoadingScreen = memo(function LoadingScreen({ message = "Yuklanmoqda..." }: { message?: string }) {
   return (
     <div
       style={{
@@ -145,7 +146,7 @@ export function LoadingScreen({ message = "Yuklanmoqda..." }: { message?: string
       </p>
     </div>
   );
-}
+})
 
 // ============================================
 // Empty State
@@ -157,7 +158,7 @@ interface EmptyStateProps {
   action?: React.ReactNode;
 }
 
-export function EmptyState({ icon = "📭", title, description, action }: EmptyStateProps) {
+export const EmptyState = memo(function EmptyState({ icon = "📭", title, description, action }: EmptyStateProps) {
   return (
     <div
       style={{
@@ -190,12 +191,12 @@ export function EmptyState({ icon = "📭", title, description, action }: EmptyS
       {action && <div style={{ marginTop: "8px" }}>{action}</div>}
     </div>
   );
-}
+})
 
 // ============================================
 // Section Container
 // ============================================
-export function Section({
+export const Section = memo(function Section({
   title,
   children,
   style,
@@ -214,4 +215,4 @@ export function Section({
       <div className="tg-section">{children}</div>
     </div>
   );
-}
+})

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { AttendanceRecord, AttendanceStatus, Student } from "@/lib/types";
 import { teacherApi } from "@/lib/api";
 import { getTodayISO } from "@/lib/telegram";
@@ -19,9 +19,9 @@ interface UseAttendanceReturn {
   setAllStatus: (students: Student[], status: AttendanceStatus) => void;
   submitAttendance: (groupId: number, students: Student[]) => Promise<boolean>;
   getStatus: (studentId: number) => AttendanceStatus | null;
-  getPresentCount: () => number;
-  getAbsentCount: () => number;
-  getLateCount: () => number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
   checkExisting: (groupId: number) => Promise<void>;
 }
 
@@ -101,20 +101,14 @@ export function useAttendance(): UseAttendanceReturn {
     [drafts]
   );
 
-  const getPresentCount = useCallback(
-    () => Object.values(drafts).filter((s) => s === "present").length,
-    [drafts]
-  );
-
-  const getAbsentCount = useCallback(
-    () => Object.values(drafts).filter((s) => s === "absent").length,
-    [drafts]
-  );
-
-  const getLateCount = useCallback(
-    () => Object.values(drafts).filter((s) => s === "late").length,
-    [drafts]
-  );
+  const counts = useMemo(() => {
+    const values = Object.values(drafts);
+    return {
+      present: values.filter((s) => s === "present").length,
+      absent: values.filter((s) => s === "absent").length,
+      late: values.filter((s) => s === "late").length,
+    };
+  }, [drafts]);
 
   return {
     drafts,
@@ -126,9 +120,9 @@ export function useAttendance(): UseAttendanceReturn {
     setAllStatus,
     submitAttendance,
     getStatus,
-    getPresentCount,
-    getAbsentCount,
-    getLateCount,
+    presentCount: counts.present,
+    absentCount: counts.absent,
+    lateCount: counts.late,
     checkExisting,
   };
 }

@@ -33,9 +33,9 @@ export default function AttendancePage() {
 		setAllStatus,
 		submitAttendance,
 		getStatus,
-		getPresentCount,
-		getAbsentCount,
-		getLateCount,
+		presentCount,
+		absentCount,
+		lateCount,
 		isSaving,
 		isSubmitted,
 		checkExisting,
@@ -217,9 +217,9 @@ export default function AttendancePage() {
 
 			{/* Summary */}
 			<AttendanceSummary
-				present={getPresentCount()}
-				absent={getAbsentCount()}
-				late={getLateCount()}
+				present={presentCount}
+				absent={absentCount}
+				late={lateCount}
 				total={totalCount}
 			/>
 
